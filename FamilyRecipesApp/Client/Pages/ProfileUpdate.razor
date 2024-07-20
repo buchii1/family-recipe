@@ -1,0 +1,117 @@
+@page "/profile-update"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Profile Update</PageTitle>
+
+<h3>Profile Update</h3>
+
+<EditForm Model="@userProfile" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="firstName">First Name:</label>
+        <InputText id="firstName" class="form-control" @bind-Value="userProfile.FirstName" />
+        <ValidationMessage For="@(() => userProfile.FirstName)" />
+    </div>
+
+    <div class="form-group">
+        <label for="lastName">Last Name:</label>
+        <InputText id="lastName" class="form-control" @bind-Value="userProfile.LastName" />
+        <ValidationMessage For="@(() => userProfile.LastName)" />
+    </div>
+
+    <div class="form-group">
+        <label for="email">Email Address:</label>
+        <InputText id="email" class="form-control" @bind-Value="userProfile.Email" />
+        <ValidationMessage For="@(() => userProfile.Email)" />
+    </div>
+
+    <div class="form-group">
+        <label for="bio">Bio:</label>
+        <InputTextArea id="bio" class="form-control" @bind-Value="userProfile.Bio" />
+        <ValidationMessage For="@(() => userProfile.Bio)" />
+    </div>
+
+    <div class="form-group">
+        <label for="profileImg">Profile Image:</label>
+        <InputFile id="profileImg" class="form-control-file" OnChange="HandleFileSelected" />
+        <ValidationMessage For="@(() => userProfile.ProfileImg)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Update</button>
+
+    <label class="text-danger">@error</label>
+</EditForm>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+
+@code {
+    private UserProfile userProfile = new UserProfile();
+    private bool isLoading = true;
+    string error { get; set; }
+
+    private AuthenticationState authenticationState;
+
+    protected override async Task OnInitializedAsync()
+    {
+        authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var username = user.Identity.Name;
+            userProfile = await Http.GetFromJsonAsync<UserProfile>($"api/user/{username}");
+            isLoading = false;
+        }
+        else
+        {
+            Navigation.NavigateTo("/signin");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        error = null;
+        try
+        {
+            if (selectedImage != null)
+            {
+                userProfile.ProfileImg = await ConvertFileToBase64(selectedImage);
+            }
+            var response = await Http.PutAsJsonAsync("api/user", userProfile);
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/profile");
+            }
+            else
+            {
+                error = "Error updating profile.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            Console.WriteLine($"Exception: {ex.Message}"); // Debugging log
+        }
+    }
+
+    private async Task<string> ConvertFileToBase64(IBrowserFile file)
+    {
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+        return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+    }
+
+    private IBrowserFile selectedImage;
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedImage = e.File;
+        Console.WriteLine($"Selected file: {selectedImage.Name}"); // Debugging log
+    }
+}

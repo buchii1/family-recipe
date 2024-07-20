@@ -1,0 +1,62 @@
+@page "/signup"
+@using Microsoft.AspNetCore.Components.Forms
+@inject NavigationManager Navigation
+@inject CustomStateProvider authStateProvider
+
+
+    <div class="d-flex justify-content-center align-items-center vh-100">
+        <div class="card p-4" style="width: 100%; max-width: 400px;">
+            <div class="card-body">
+                <h3 class="card-title text-center">Sign Up</h3>
+                <EditForm OnValidSubmit="OnSubmit" Model="registerRequest">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="form-group mb-3">
+                        <label for="UserName">Username:</label>
+                        <input id="UserName" type="text" class="form-control" @bind="@registerRequest.UserName" />
+                        <ValidationMessage For="@(() => registerRequest.UserName)" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="password">Password:</label>
+                        <input id="password" type="password" class="form-control" @bind="@registerRequest.Password" required />
+                        <ValidationMessage For="@(() => registerRequest.Password)" />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="passwordConfirm">Confirm Password:</label>
+                        <input id="passwordConfirm" type="password" class="form-control" @bind="@registerRequest.PasswordConfirm" required />
+                        <ValidationMessage For="@(() => registerRequest.PasswordConfirm)" />
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">Create account</button>
+
+                    <label class="text-danger">@error</label>
+                    <div class="mt-3">
+                    <NavLink href="/signin" class="text-center">
+                        <h6 class="">Already have an account? Sign In</h6>
+                    </NavLink>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+@code{
+    RegisterRequest registerRequest { get; set; } = new RegisterRequest();
+    string error { get; set; }
+
+    async Task OnSubmit()
+    {
+        error = null;
+        try
+        {
+            await authStateProvider.Register(registerRequest);
+            Navigation.NavigateTo("/profile-update");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+}

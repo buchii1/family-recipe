@@ -1,0 +1,99 @@
+﻿@page "/"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Home</PageTitle>
+
+<HeadContent>
+    <style>
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .recipe-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .recipe-item img {
+            max-width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+
+        .container {
+            padding: 20px;
+        }
+    </style>
+</HeadContent>
+
+<!-- Assuming FeaturesSection is a separate component -->
+<FeaturesSection />
+
+<div class="container">
+    <h3>Featured Recipes</h3>
+
+    @if (recipes != null && recipes.Any())
+    {
+        <div class="recipe-grid">
+            @foreach (var recipe in displayedRecipes)
+            {
+                <div class="recipe-item">
+                    <img src="@recipe.RecipeImg" @onclick="() => NavigateToRecipe(recipe.RecipeId)" />
+                    <h5 class="card-title">@recipe.Title</h5>
+                </div>
+            }
+        </div>
+
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" @onclick="ShowMore">Show More</button>
+        </div>
+    }
+    else
+    {
+        <h6>No recipes to display...</h6>
+    }
+</div>
+
+@code {
+    private List<Recipe> recipes = new List<Recipe>();
+    private List<Recipe> displayedRecipes = new List<Recipe>();
+    private const int DisplayCount = 6;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRecipes();
+        ShuffleAndDisplayRecipes();
+    }
+
+    private async Task LoadRecipes()
+    {
+        var response = await Http.GetFromJsonAsync<List<Recipe>>("api/recipe");
+        if (response != null)
+        {
+            recipes = response;
+        }
+    }
+
+    private void ShuffleAndDisplayRecipes()
+    {
+        if (recipes.Any())
+        {
+            var random = new Random();
+            displayedRecipes = recipes.OrderBy(r => random.Next()).Take(DisplayCount).ToList();
+        }
+    }
+
+    private void NavigateToRecipe(int recipeId)
+    {
+        Navigation.NavigateTo($"/recipe/{recipeId}");
+    }
+
+    private void ShowMore()
+    {
+        Navigation.NavigateTo("/recipes");
+    }
+}

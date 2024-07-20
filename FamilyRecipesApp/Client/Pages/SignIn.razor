@@ -1,0 +1,78 @@
+@page "/signin"
+@using Microsoft.AspNetCore.Components.Forms
+@inject NavigationManager Navigation
+@inject CustomStateProvider authStateProvider
+
+<!-- Your existing sign-in form code here -->
+
+
+<h3>Sign In</h3>
+
+
+
+<div class="row1 row justify-content-center mt-5">
+    <div class="col-md-4">
+<EditForm Model="@loginRequest" OnValidSubmit="OnSubmit">
+    <DataAnnotationsValidator />
+    @* <ValidationSummary /> *@
+
+    <div class="form-group">
+        <label for="username">UserName:</label>
+        <InputText id="UserName" class="form-control" @bind-Value="loginRequest.UserName" placeholder="UserName"/>
+        <ValidationMessage For="@(() => loginRequest.UserName)" />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <InputText id="password" class="form-control" type="password" @bind-Value="loginRequest.Password" placeholder="Password" />
+        <ValidationMessage For="@(() => loginRequest.Password)" />
+    </div>
+
+    <div class="form-group">
+       <InputCheckbox id="inputRememberMe" class="form-check-input" @bind-Value="@loginRequest.RememberMe" />
+        <label class="form-check-label" for="inputRememberMe">Remember Me</label> 
+    </div>
+
+    <button type="submit" class="btn btn-primary">Sign In</button>
+
+    <label class="text-danger">@error</label>
+
+    <NavLink href="signup">
+        <h6 class="font-weight-normal text-center">Create account</h6>
+    </NavLink>
+</EditForm>
+<hr />
+
+</div>
+</div>
+
+
+<style>
+    .google-logo {
+        height: 20px;
+        margin-right: 10px;
+    }
+
+    .row1 {
+        padding: 100px;
+    }
+</style>
+
+@code{
+    LoginRequest loginRequest { get; set; } = new LoginRequest();
+    string error { get; set; }
+
+    async Task OnSubmit()
+    {
+        error = null;
+        try
+        {
+            await authStateProvider.Login(loginRequest);
+            Navigation.NavigateTo("/profile");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+}

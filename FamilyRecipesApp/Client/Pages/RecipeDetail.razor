@@ -1,0 +1,104 @@
+@page "/recipe/{recipeId:int}"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Recipe Detail</PageTitle>
+
+<HeadContent>
+    <style>
+        .recipe-detail {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .recipe-image {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        h2,
+        h4 {
+            margin-top: 20px;
+        }
+
+        ul,
+        ol {
+            padding-left: 20px;
+        }
+    </style>
+</HeadContent>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="recipe-detail">
+        <h2>@recipe.Title</h2>
+        <p>By: @($"{author.FirstName} {author.LastName}")</p>
+        <p>Added on: @recipe.CreatedAt.ToString("dddd, dd MMMM yyyy")</p>
+
+        @if (!string.IsNullOrEmpty(recipe.RecipeImg))
+        {
+            <img src="@recipe.RecipeImg" alt="@recipe.Title" class="recipe-image" />
+        }
+
+        <h4>Description</h4>
+        <p>@recipe.Description</p>
+
+        <h4>Ingredients</h4>
+        <ul>
+            @foreach (var ingredient in ingredients)
+            {
+                <li>@ingredient</li>
+            }
+        </ul>
+
+        <h4>Preparation Steps</h4>
+        
+        <ol>
+            @foreach (var step in preparationSteps)
+            {
+                <li>@step</li>
+            }
+        </ol>
+    </div>
+}
+
+@code {
+    [Parameter] public int recipeId { get; set; }
+    private Recipe recipe;
+    private UserProfile author;
+    private List<string> ingredients;
+    private List<string> preparationSteps;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRecipeDetails();
+        isLoading = false;
+    }
+
+    private async Task LoadRecipeDetails()
+    {
+        try
+        {
+            recipe = await Http.GetFromJsonAsync<Recipe>($"api/recipe/{recipeId}");
+
+            if (recipe != null)
+            {
+                author = await Http.GetFromJsonAsync<UserProfile>($"api/user/{recipe.UserName}");
+
+                ingredients = recipe.Ingredients.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                preparationSteps = recipe.PreparationSteps.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading recipe details: {ex.Message}");
+        }
+    }
+}

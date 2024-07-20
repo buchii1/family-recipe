@@ -1,0 +1,202 @@
+@page "/profile"
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>User Profile</PageTitle>
+
+<HeadContent>
+    <style>
+        .profile-container {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .profile-image {
+            border-radius: 50%;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            margin: 10px 0;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+
+        .btn-primary {
+            margin-top: 20px;
+        }
+
+        .recipe-list {
+            margin-top: 20px;
+        }
+
+        .recipe-item {
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .recipe-item img {
+            width: 70px;
+            height: auto;
+            max-height: 200px;
+            object-fit: cover;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .recipe-item h4 {
+            margin-top: 0;
+        }
+
+        .recipe-item .action-buttons {
+            margin-top: 10px;
+        }
+
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .page-link {
+            cursor: pointer;
+        }
+    </style>
+</HeadContent>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="profile-container">
+        @if (!string.IsNullOrEmpty(userProfile.ProfileImg))
+        {
+            <img src="@userProfile.ProfileImg" alt="@userProfile.FirstName" class="profile-image" />
+        }
+        else
+        {
+            <img src="/images/profile-img.jpg" alt="@userProfile.FirstName" class="profile-image" />
+        }
+
+        <h3>@($"{userProfile.FirstName} {userProfile.LastName}")</h3>
+        <p>@userProfile.Email</p>
+        <p>@userProfile.Bio</p>
+
+        <a href="/profile-update" class="btn btn-primary">Edit Profile</a>
+    </div>
+
+    <h3>My Recipes</h3>
+    <div class="recipe-list">
+        @if (recipes != null && recipes.Any())
+        {
+            @foreach (var recipe in recipes.Skip((currentPage - 1) * pageSize).Take(pageSize))
+            {
+                <div class="recipe-item">
+                    <img src="@recipe.RecipeImg" alt="@recipe.Title" @onclick="() => ViewRecipe(recipe.RecipeId)" />
+                    <h4>@recipe.Title</h4>
+                    <p>Created by: @recipe.UserName</p>
+                    <div class="action-buttons">
+                        <a href="/edit-recipe/@recipe.RecipeId.ToString()" class="btn btn-primary">Edit Recipe</a>
+                        <button class="btn btn-danger" @onclick="() => ConfirmDelete(recipe.RecipeId)">Delete</button>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>No recipes found!</p>
+            <h6>Let the world discover your culinary skills.
+                <a href="/add-recipe">Add</a>
+            </h6>
+        }
+    </div>
+
+    <div class="pagination">
+        <nav aria-label="Recipe Pagination">
+            <ul class="pagination">
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(currentPage == i ? "active" : "")">
+                        <a class="page-link" @onclick="() => ChangePage(i)">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+}
+
+@code {
+    private UserProfile userProfile = new UserProfile();
+    private List<Recipe> recipes = new List<Recipe>();
+    private bool isLoading = true;
+
+    private AuthenticationState authenticationState;
+    private int currentPage = 1;
+    private int pageSize = 6;
+    private int totalPages => (int)Math.Ceiling((double)recipes.Count / pageSize);
+
+    protected override async Task OnInitializedAsync()
+    {
+        authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authenticationState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            var username = user.Identity.Name;
+            userProfile = await Http.GetFromJsonAsync<UserProfile>($"api/user/{username}");
+            recipes = await Http.GetFromJsonAsync<List<Recipe>>($"api/recipe/user/{username}");
+            isLoading = false;
+        }
+        else
+        {
+            Navigation.NavigateTo("/signin");
+        }
+    }
+
+    private void ViewRecipe(int recipeId)
+    {
+        Navigation.NavigateTo($"/recipe/{recipeId}");
+    }
+
+    private async Task ConfirmDelete(int recipeId)
+    {
+        var confirm = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this recipe?");
+        if (confirm)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/recipe/{recipeId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Remove locally to update UI
+                    recipes.RemoveAll(r => r.RecipeId == recipeId);
+                    StateHasChanged();
+                }
+                else
+                {
+                    var errorMessage = await response.Content.ReadAsStringAsync();
+                    throw new ApplicationException($"Error deleting recipe: {response.StatusCode}, {errorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting recipe: {ex.Message}");
+            }
+        }
+    }
+
+    private void ChangePage(int page)
+    {
+        currentPage = page;
+    }
+}

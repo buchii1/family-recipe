@@ -1,0 +1,158 @@
+@page "/edit-recipe/{RecipeId:int}"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Edit Recipe</h3>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else if (recipe == null)
+{
+    <p>Recipe not found.</p>
+}
+else
+{
+    <EditForm Model="@recipe" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label for="title">Name:</label>
+            <InputText id="title" class="form-control" @bind-Value="@recipe.Title" />
+            <ValidationMessage For="@(() => recipe.Title)" />
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description:</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="@recipe.Description" />
+            <ValidationMessage For="@(() => recipe.Description)" />
+        </div>
+
+        <div class="form-group">
+            <label for="ingredients">Ingredients (one per line):</label>
+            <InputTextArea id="ingredients" class="form-control" @bind-Value="@recipe.Ingredients" 
+            placeholder="Enter each ingredient on a new line" />
+            <ValidationMessage For="@(() => recipe.Ingredients)" />
+        </div>
+
+        <div class="form-group">
+            <label for="preparationSteps">Preparation Steps (one per line):</label>
+            <InputTextArea id="preparationSteps" class="form-control" @bind-Value="@recipe.PreparationSteps" 
+            placeholder="Enter each step on a new line" />
+            <ValidationMessage For="@(() => recipe.PreparationSteps)" />
+        </div>
+
+        <div class="form-group">
+            <label for="recipeImg">Recipe Image:</label>
+            <InputFile id="recipeImg" class="form-control-file" OnChange="HandleFileSelected" />
+            <ValidationMessage For="@(() => recipe.RecipeImg)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Recipe</button>
+        <button type="button" class="btn btn-secondary ml-2" @onclick="CancelEdit">Cancel</button>
+
+        <p class="text-danger">@error</p>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int RecipeId { get; set; }
+
+    private Recipe recipe = new Recipe();
+    private string error;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
+        await LoadRecipe();
+        isLoading = false;
+    }
+
+    private async Task LoadRecipe()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"api/recipe/{RecipeId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                recipe = await response.Content.ReadFromJsonAsync<Recipe>();
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                error = $"Error loading recipe: {response.StatusCode}, {errorMessage}";
+                recipe = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Error loading recipe: {ex.Message}";
+            Console.WriteLine($"Error loading recipe: {ex}");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        Console.WriteLine("Submitting Recipe Form");
+        error = null;
+        try
+        {
+            if (selectedImage != null)
+            {
+                recipe.RecipeImg = await ConvertFileToBase64(selectedImage);
+            }
+            var response = await Http.PutAsJsonAsync($"api/recipe/{RecipeId}", recipe);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var updatedRecipe = await response.Content.ReadFromJsonAsync<Recipe>();
+                Navigation.NavigateTo($"/recipe/{updatedRecipe.RecipeId}");
+            }
+            else
+            {
+                var errorMessage = await response.Content.ReadAsStringAsync();
+                error = $"Error updating recipe: {response.StatusCode}, {errorMessage}";
+                Console.WriteLine(error);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Error updating recipe: {ex.Message}";
+            Console.WriteLine($"Error updating recipe: {ex}");
+        }
+    }
+
+    private async Task<string> ConvertFileToBase64(IBrowserFile file)
+    {
+        var buffer = new byte[file.Size];
+        await file.OpenReadStream().ReadAsync(buffer);
+        return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+    }
+
+    private IBrowserFile selectedImage;
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedImage = e.File;
+        // Console.WriteLine($"Selected file: {selectedImage.Name}"); // Debugging log
+    }
+
+    private void CancelEdit()
+    {
+        Navigation.NavigateTo("/profile");
+    }
+}

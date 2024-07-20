@@ -1,0 +1,53 @@
+@typeparam TItem
+@using System.Collections.Generic
+
+<div class="pagination">
+    @if (TotalPages > 1)
+    {
+        <button @onclick="GoToPreviousPage" disabled="@(CurrentPage == 1)">Previous</button>
+
+        @for (int i = 1; i <= TotalPages; i++)
+        {
+            <button @onclick="() => GoToPage(i)" class="@(CurrentPage == i ? "active" : "")">@i</button>
+        }
+
+        <button @onclick="GoToNextPage" disabled="@(CurrentPage == TotalPages)">Next</button>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<TItem> Items { get; set; }
+    [Parameter]
+    public int ItemsPerPage { get; set; } = 10;
+    [Parameter]
+    public int CurrentPage { get; set; }
+    [Parameter]
+    public EventCallback<int> OnPageChanged { get; set; }
+
+    private int TotalPages => (int)Math.Ceiling((double)Items.Count / ItemsPerPage);
+
+    private async Task GoToPage(int page)
+    {
+        CurrentPage = page;
+        await OnPageChanged.InvokeAsync(page);
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage--;
+            await OnPageChanged.InvokeAsync(CurrentPage);
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (CurrentPage < TotalPages)
+        {
+            CurrentPage++;
+            await OnPageChanged.InvokeAsync(CurrentPage);
+        }
+    }
+}

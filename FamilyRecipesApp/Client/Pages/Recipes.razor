@@ -1,0 +1,125 @@
+@page "/recipes"
+@using FamilyRecipesApp.Shared.Models
+@inject HttpClient Http
+
+<PageTitle>Recipes</PageTitle>
+
+<HeadContent>
+    <style>
+        .recipe-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .recipe-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            width: 200px;
+            text-align: center;
+        }
+
+        .recipe-img {
+            width: 50px;
+            height: auto;
+        }
+
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+        }
+
+        .pagination .active {
+            font-weight: bold;
+        }
+    </style>
+</HeadContent>
+
+<h3>Recipes</h3>
+
+<input type="text" @bind="searchQuery" placeholder="Search recipes..." />
+<button @onclick="SearchRecipes">Search</button>
+<button @onclick="RefreshPage">Refresh</button>
+
+@if (recipes != null && recipes.Any())
+{
+    <div class="recipe-grid">
+        @foreach (var recipe in pagedRecipes)
+        {
+            <div class="recipe-box">
+                <a href="@($"/recipe/{recipe.RecipeId}")">
+                    <img src="@recipe.RecipeImg" alt="@recipe.Title" class="recipe-img" />
+                </a>
+                <h4>@recipe.Title</h4>
+                <p>by @recipe.UserName</p>
+                <a href="@($"/recipe/{recipe.RecipeId}")">View</a>
+            </div>
+        }
+    </div>
+
+    <Pagination TItem="Recipe" Items="recipes" ItemsPerPage="6" CurrentPage="@currentPage" OnPageChanged="OnPageChanged" />
+}
+else
+{
+    <p>No recipes found.</p>
+}
+
+@code {
+    private List<Recipe> recipes;
+    private List<Recipe> pagedRecipes;
+    private int currentPage = 1;
+    private string searchQuery = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRecipes();
+        PaginateRecipes();
+    }
+
+    private async Task LoadRecipes()
+    {
+        recipes = await Http.GetFromJsonAsync<List<Recipe>>("api/recipe");
+        SortAndPaginateRecipes();
+    }
+
+    private void SortAndPaginateRecipes()
+    {
+        if (!string.IsNullOrEmpty(searchQuery))
+        {
+            recipes = recipes.Where(r => r.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        recipes = recipes.OrderByDescending(r => r.CreatedAt).ToList();
+        PaginateRecipes();
+    }
+
+    private void PaginateRecipes()
+    {
+        pagedRecipes = recipes.Skip((currentPage - 1) * 6).Take(6).ToList();
+    }
+
+    private void OnPageChanged(int page)
+    {
+        currentPage = page;
+        PaginateRecipes();
+    }
+
+    private void SearchRecipes()
+    {
+        currentPage = 1;
+        SortAndPaginateRecipes();
+        searchQuery = ""; // Clear the search query after searching
+    }
+
+    private async Task RefreshPage()
+    {
+        searchQuery = ""; // Clear the search query
+        await LoadRecipes(); // Reload recipes from the server
+        PaginateRecipes(); // Paginate the freshly loaded recipes
+    }
+}
