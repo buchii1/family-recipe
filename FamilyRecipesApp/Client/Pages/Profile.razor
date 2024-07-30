@@ -30,9 +30,7 @@
             margin: 5px 0;
         }
 
-        .btn-primary {
-            margin-top: 20px;
-        }
+       
 
         .recipe-list {
             margin-top: 20px;
@@ -45,7 +43,7 @@
         }
 
         .recipe-item img {
-            width: 70px;
+            width: 150px;
             height: auto;
             max-height: 200px;
             object-fit: cover;
@@ -135,68 +133,102 @@ else
 }
 
 @code {
+    // Instance of UserProfile to hold the user's profile data
     private UserProfile userProfile = new UserProfile();
+    
+    // List to hold the user's recipes
     private List<Recipe> recipes = new List<Recipe>();
+    
+    // Flag to indicate whether the data is still loading
     private bool isLoading = true;
 
+    // Variable to store the current authentication state
     private AuthenticationState authenticationState;
+
+    // Current page number for pagination
     private int currentPage = 1;
+    
+    // Number of items per page for pagination
     private int pageSize = 6;
+    
+    // Total number of pages based on the number of recipes and page size
     private int totalPages => (int)Math.Ceiling((double)recipes.Count / pageSize);
 
+    // Method called when the component is initialized
     protected override async Task OnInitializedAsync()
     {
+        // Retrieve the current authentication state
         authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authenticationState.User;
 
+        // Check if the user is authenticated
         if (user.Identity.IsAuthenticated)
         {
+            // Get the username from the authentication state
             var username = user.Identity.Name;
+
+            // Fetch the user's profile data
             userProfile = await Http.GetFromJsonAsync<UserProfile>($"api/user/{username}");
+            
+            // Fetch the user's recipes
             recipes = await Http.GetFromJsonAsync<List<Recipe>>($"api/recipe/user/{username}");
+
+            // Set loading flag to false as data has been loaded
             isLoading = false;
         }
         else
         {
+            // Redirect to the sign-in page if the user is not authenticated
             Navigation.NavigateTo("/signin");
         }
     }
 
+    // Method to navigate to a recipe detail page
     private void ViewRecipe(int recipeId)
     {
+        // Redirect to the recipe detail page using the recipe ID
         Navigation.NavigateTo($"/recipe/{recipeId}");
     }
 
+    // Method to confirm and handle recipe deletion
     private async Task ConfirmDelete(int recipeId)
     {
+        // Show confirmation dialog to the user
         var confirm = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this recipe?");
+        
         if (confirm)
         {
             try
             {
+                // Send an HTTP DELETE request to remove the recipe
                 var response = await Http.DeleteAsync($"api/recipe/{recipeId}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // Remove locally to update UI
+                    // Remove the recipe from the local list to update the UI
                     recipes.RemoveAll(r => r.RecipeId == recipeId);
-                    StateHasChanged();
+                    StateHasChanged(); // Notify the component to re-render
                 }
                 else
                 {
+                    // Read and throw an error if the deletion fails
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     throw new ApplicationException($"Error deleting recipe: {response.StatusCode}, {errorMessage}");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error deleting recipe: {ex.Message}");
+                // Log any errors that occur during deletion
+                @* Console.WriteLine($"Error deleting recipe: {ex.Message}"); *@
             }
         }
     }
 
+    // Method to change the current page for pagination
     private void ChangePage(int page)
     {
+        // Update the current page number
         currentPage = page;
     }
 }
+

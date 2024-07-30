@@ -1,0 +1,84 @@
+
+
+
+
+@media (max-width: 768px) {
+    
+
+
+    /* General styling for the form container */
+    .edit-form-container {
+        max-width: 100%; /* Ensure the form takes full width on mobile */
+        margin: 0 auto; /* Center the form horizontally */
+        padding: 20px; /* Add padding around the form */
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+
+    /* Style for form groups */
+    .form-group {
+        margin-bottom: 15px; /* Add space between form elements */
+    }
+
+    /* Style for labels */
+    .form-group label {
+        display: block; /* Ensure labels are displayed as block elements */
+        margin-bottom: 5px; /* Space between label and input field */
+        font-size: 16px; /* Set a readable font size */
+        color: #333; /* Set a color for the labels */
+    }
+
+    /* Style for input and textarea fields */
+    .form-control, .form-control-file {
+        width: 100%; /* Full width */
+        padding: 12px; /* Add padding inside the input fields */
+        border-radius: 5px; /* Rounded corners */
+        border: 1px solid #ccc; /* Light border */
+        font-size: 16px; /* Set a readable font size */
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+
+    /* Style for textarea fields */
+    .form-control {
+        resize: vertical; /* Allow vertical resizing for textareas */
+    }
+
+    /* Focus styles for input and textarea fields */
+    .form-control:focus {
+        border-color: #007bff; /* Change border color on focus */
+        outline: none; /* Remove default outline */
+    }
+
+    /* Style for file input */
+    .form-control-file {
+        padding: 6px; /* Less padding for file input */
+    }
+
+    /* Style for the submit button */
+    .btn-primary {
+        display: block; /* Ensure the button is displayed as a block element */
+        width: 100%; /* Full width */
+        padding: 15px; /* Add padding inside the button */
+        border-radius: 5px; /* Rounded corners */
+        background-color: #007bff; /* Primary color */
+        color: #fff; /* Text color */
+        border: none; /* Remove border */
+        font-size: 16px; /* Set a readable font size */
+        cursor: pointer; /* Change cursor to pointer */
+        text-align: center; /* Center text inside the button */
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3; /* Darker color on hover */
+    }
+
+    /* Style for validation messages */
+    .text-danger {
+        color: #dc3545; /* Red color for error messages */
+        font-size: 14px; /* Set a readable font size */
+    }
+
+}
+
+form {
+    max-width: 500px;
+}

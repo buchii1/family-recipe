@@ -6,45 +6,63 @@
 
 <HeadContent>
     <style>
-        .recipe-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
+        .search-btn {
+    background: #ff7315;
+    background-image: -webkit-linear-gradient(top, #ff7315, #ff7315);
+    background-image: -moz-linear-gradient(top, #ff7315, #ff7315);
+    background-image: -ms-linear-gradient(top, #ff7315, #ff7315);
+    background-image: -o-linear-gradient(top, #ff7315, #ff7315);
+    background-image: linear-gradient(to bottom, #ff7315, #ff7315);
+    -webkit-border-radius: 8;
+    -moz-border-radius: 8;
+    border-radius: 8px;
+    font-family: Arial;
+    color: #ffffff;
+    font-size: 20px;
+    padding: 5px 10px 5px 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    text-decoration: none;
+    }
 
-        .recipe-box {
-            border: 1px solid #ddd;
-            padding: 10px;
-            width: 200px;
-            text-align: center;
-        }
+    .btn:hover {
+    background: #000000;
+    background-image: -webkit-linear-gradient(top, #000000, #ff7315);
+    background-image: -moz-linear-gradient(top, #000000, #ff7315);
+    background-image: -ms-linear-gradient(top, #000000, #ff7315);
+    background-image: -o-linear-gradient(top, #000000, #ff7315);
+    background-image: linear-gradient(to bottom, #000000, #ff7315);
+    text-decoration: none;
+    }
 
-        .recipe-img {
-            width: 50px;
-            height: auto;
-        }
+    input {
+    width: 470px; /* Full width on mobile */
+    padding: 10px; /* Adequate padding */
+    border-radius: 5px; /* Rounded corners */
+    border: 1px solid #ccc; /* Light border */
+    font-size: 16px; /* Larger font size for readability */
+    box-sizing: border-box; /* Ensure padding and border are included in width */
+}   
 
-        .pagination {
-            margin-top: 20px;
-            text-align: center;
-        }
+    .recipe-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
 
-        .pagination button {
-            margin: 0 5px;
-            padding: 5px 10px;
-        }
+    #filler-div {
+        height: 120px;
+        visibility: hidden;
+    }
 
-        .pagination .active {
-            font-weight: bold;
-        }
     </style>
 </HeadContent>
 
 <h3>Recipes</h3>
 
 <input type="text" @bind="searchQuery" placeholder="Search recipes..." />
-<button @onclick="SearchRecipes">Search</button>
-<button @onclick="RefreshPage">Refresh</button>
+<button @onclick="SearchRecipes" class="search-btn">Search</button>
+<button @onclick="RefreshPage" class="search-btn">Refresh</button>
 
 @if (recipes != null && recipes.Any())
 {
@@ -55,11 +73,15 @@
                 <a href="@($"/recipe/{recipe.RecipeId}")">
                     <img src="@recipe.RecipeImg" alt="@recipe.Title" class="recipe-img" />
                 </a>
-                <h4>@recipe.Title</h4>
+                <h4 class="recipe-h4">@recipe.Title</h4>
                 <p>by @recipe.UserName</p>
                 <a href="@($"/recipe/{recipe.RecipeId}")">View</a>
             </div>
         }
+    </div>
+
+    <div id="filler-div">
+        Filler Div
     </div>
 
     <Pagination TItem="Recipe" Items="recipes" ItemsPerPage="6" CurrentPage="@currentPage" OnPageChanged="OnPageChanged" />
@@ -70,56 +92,88 @@ else
 }
 
 @code {
+    // List to store all recipes retrieved from the server
     private List<Recipe> recipes;
+    
+    // List to store the recipes currently displayed on the page
     private List<Recipe> pagedRecipes;
+    
+    // Current page number for pagination
     private int currentPage = 1;
+    
+    // Search query used to filter recipes
     private string searchQuery = "";
 
+    // Called when the component is initialized
     protected override async Task OnInitializedAsync()
     {
+        // Load recipes from the server and apply pagination
         await LoadRecipes();
         PaginateRecipes();
     }
 
+    // Method to load recipes from the server
     private async Task LoadRecipes()
     {
+        // Fetch recipes from the API endpoint
         recipes = await Http.GetFromJsonAsync<List<Recipe>>("api/recipe");
+        
+        // Sort and paginate the loaded recipes
         SortAndPaginateRecipes();
     }
 
+    // Method to sort recipes by creation date and apply search filter
     private void SortAndPaginateRecipes()
     {
+        // Apply search filter if a search query is provided
         if (!string.IsNullOrEmpty(searchQuery))
         {
             recipes = recipes.Where(r => r.Title.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
+        // Sort recipes by creation date in descending order
         recipes = recipes.OrderByDescending(r => r.CreatedAt).ToList();
+        
+        // Apply pagination to the sorted recipes
         PaginateRecipes();
     }
 
+    // Method to update the paginated list of recipes based on the current page
     private void PaginateRecipes()
     {
+        // Calculate the recipes to display on the current page
         pagedRecipes = recipes.Skip((currentPage - 1) * 6).Take(6).ToList();
     }
 
+    // Method to handle page change events
     private void OnPageChanged(int page)
     {
+        // Update the current page and refresh the paginated list of recipes
         currentPage = page;
         PaginateRecipes();
     }
 
+    // Method to handle search functionality
     private void SearchRecipes()
     {
+        // Reset the page to the first page and apply search and pagination
         currentPage = 1;
         SortAndPaginateRecipes();
-        searchQuery = ""; // Clear the search query after searching
+        
+        // Clear the search query after performing the search
+        searchQuery = "";
     }
 
+    // Method to refresh the recipe list and clear search filters
     private async Task RefreshPage()
     {
-        searchQuery = ""; // Clear the search query
-        await LoadRecipes(); // Reload recipes from the server
-        PaginateRecipes(); // Paginate the freshly loaded recipes
+        // Clear the search query
+        searchQuery = "";
+        
+        // Reload recipes from the server
+        await LoadRecipes();
+        
+        // Reapply pagination to the freshly loaded recipes
+        PaginateRecipes();
     }
 }

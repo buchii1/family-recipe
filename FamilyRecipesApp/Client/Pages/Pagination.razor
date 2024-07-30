@@ -16,23 +16,33 @@
 </div>
 
 @code {
+    // List of items to be paginated, passed from the parent component
     [Parameter]
     public List<TItem> Items { get; set; }
+    
+    // Number of items to display per page, default is 10
     [Parameter]
     public int ItemsPerPage { get; set; } = 10;
+    
+    // Current page number for pagination
     [Parameter]
     public int CurrentPage { get; set; }
+    
+    // Event callback to notify when the page changes
     [Parameter]
     public EventCallback<int> OnPageChanged { get; set; }
 
+    // Calculated total number of pages based on items count and items per page
     private int TotalPages => (int)Math.Ceiling((double)Items.Count / ItemsPerPage);
 
+    // Method to navigate to a specific page and notify parent component
     private async Task GoToPage(int page)
     {
         CurrentPage = page;
         await OnPageChanged.InvokeAsync(page);
     }
 
+    // Method to navigate to the previous page if not on the first page
     private async Task GoToPreviousPage()
     {
         if (CurrentPage > 1)
@@ -42,6 +52,7 @@
         }
     }
 
+    // Method to navigate to the next page if not on the last page
     private async Task GoToNextPage()
     {
         if (CurrentPage < TotalPages)

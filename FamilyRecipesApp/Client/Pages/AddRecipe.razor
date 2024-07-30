@@ -5,7 +5,45 @@
 
 <PageTitle>Add Recipe</PageTitle>
 
-<h3>Add Recipe</h3>
+<style>
+    #filler-div {
+        height: 100px;
+        visibility: hidden;
+    }
+
+    form {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    /* Style for labels */
+    .form-group label {
+        display: block; /* Ensure labels are displayed as block elements */
+        margin-bottom: 5px; /* Space between label and input field */
+        font-size: 16px; /* Set a readable font size */
+        color: #333; /* Set a color for the labels */
+    }
+
+    /* Style for the submit button */
+    .btn-primary {
+        display: block; /* Ensure the button is displayed as a block element */
+        width: 100%; /* Full width */
+        padding: 15px; /* Add padding inside the button */
+        border-radius: 5px; /* Rounded corners */
+        background-color: #007bff; /* Primary color */
+        color: #fff; /* Text color */
+        border: none; /* Remove border */
+        font-size: 16px; /* Set a readable font size */
+        cursor: pointer; /* Change cursor to pointer */
+        text-align: center; /* Center text inside the button */
+    }
+
+    .form-group[b-z6kv1rzj5v] {
+        margin-bottom: 15px;
+    }
+</style>
+
+<h3 class="text-center mt-3">Add Recipe</h3>
 
 @if (isLoading)
 {
@@ -54,62 +92,84 @@ else
     </EditForm>
 }
 
+<div id="filler-div">
+    Filler Div
+</div>
+
 @code {
+    // Recipe object to hold the new recipe details
     private Recipe newRecipe = new Recipe();
+    
+    // String to hold error messages
     private string error;
+    
+    // Boolean to indicate if the component is loading data
     private bool isLoading = true;
 
+    // Method to handle form submission for adding a new recipe
     private async Task HandleValidSubmit()
     {
-        Console.WriteLine("Submitting Recipe Form");
+        @* Console.WriteLine("Submitting Recipe Form"); *@
         error = null;
         try
         {
+            // Convert selected image to a Base64 string if an image is selected
             if (selectedImage != null)
             {
                 newRecipe.RecipeImg = await ConvertFileToBase64(selectedImage);
             }
+
+            // Set the created date to the current UTC time
             newRecipe.CreatedAt = DateTime.UtcNow;
 
+            // Retrieve the current authentication state
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
 
+            // Check if the user is authenticated
             if (user.Identity.IsAuthenticated)
             {
+                // Get the username of the authenticated user
                 var userName = user.Identity.Name;
                 newRecipe.UserName = userName;
 
-                // Serialize the recipe object
+                // Serialize the recipe object to JSON format
                 var jsonPayload = System.Text.Json.JsonSerializer.Serialize(newRecipe);
-                Console.WriteLine(jsonPayload);
+                @* Console.WriteLine(jsonPayload); *@
 
-                // HTTP POST to save the recipe and related entities
+                // Send an HTTP POST request to save the recipe
                 var response = await Http.PostAsJsonAsync("api/recipe", newRecipe);
 
+                // Check if the response is successful
                 if (response.IsSuccessStatusCode)
                 {
+                    // Deserialize the created recipe and navigate to its detail page
                     var createdRecipe = await response.Content.ReadFromJsonAsync<Recipe>();
                     Navigation.NavigateTo($"/recipe/{createdRecipe.RecipeId}");
                 }
                 else
                 {
+                    // Read and throw an error message if the request failed
                     var errorMessage = await response.Content.ReadAsStringAsync();
                     throw new ApplicationException($"Error adding recipe: {response.StatusCode}, {errorMessage}");
                 }
             }
             else
             {
+                // Set error message and navigate to login if the user is not authenticated
                 error = "User is not authenticated.";
                 Navigation.NavigateTo("/login");
             }
         }
         catch (Exception ex)
         {
+            // Handle and log any exceptions that occur during the submission
             error = $"Error submitting recipe: {ex.Message}";
             Console.WriteLine($"Error submitting recipe: {ex}");
         }
     }
 
+    // Method to convert an uploaded file to a Base64 string
     private async Task<string> ConvertFileToBase64(IBrowserFile file)
     {
         var buffer = new byte[file.Size];
@@ -117,19 +177,24 @@ else
         return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
     }
 
+    // Variable to hold the selected image file
     private IBrowserFile selectedImage;
 
+    // Method to handle the file selection event
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
         selectedImage = e.File;
         // Console.WriteLine($"Selected file: {selectedImage.Name}"); // Debugging log
     }
 
+    // Method called when the component is initialized
     protected override async Task OnInitializedAsync()
     {
+        // Retrieve the current authentication state
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
+        // Check if the user is authenticated
         if (user.Identity.IsAuthenticated)
         {
             isLoading = false;
@@ -137,6 +202,7 @@ else
         }
         else
         {
+            // Navigate to login if the user is not authenticated
             Navigation.NavigateTo("/login");
         }
     }

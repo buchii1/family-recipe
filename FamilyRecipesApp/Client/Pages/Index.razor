@@ -18,8 +18,15 @@
             text-align: center;
         }
 
+        .card-title {
+            margin-bottom: .5rem;
+            padding: 10px;
+            /* margin: 0 auto; */
+            margin-top: 5px;
+        }
+
         .recipe-item img {
-            max-width: 100%;
+            max-width: 150px;
             height: auto;
             cursor: pointer;
         }
@@ -59,41 +66,63 @@
 </div>
 
 @code {
+    // List to hold all loaded recipes
     private List<Recipe> recipes = new List<Recipe>();
+    
+    // List to hold recipes that are currently displayed
     private List<Recipe> displayedRecipes = new List<Recipe>();
+    
+    // Number of recipes to display at a time
     private const int DisplayCount = 6;
 
+    // Method called when the component is initialized
     protected override async Task OnInitializedAsync()
     {
+        // Load all recipes from the API
         await LoadRecipes();
+        
+        // Shuffle the recipes and select a subset for display
         ShuffleAndDisplayRecipes();
     }
 
+    // Method to load recipes from the API
     private async Task LoadRecipes()
     {
+        // Send an HTTP GET request to fetch the list of recipes
         var response = await Http.GetFromJsonAsync<List<Recipe>>("api/recipe");
+        
+        // If the response is not null, assign it to the recipes list
         if (response != null)
         {
             recipes = response;
         }
     }
 
+    // Method to shuffle the recipes and select a subset for display
     private void ShuffleAndDisplayRecipes()
     {
         if (recipes.Any())
         {
+            // Create a random number generator
             var random = new Random();
+            
+            // Shuffle the recipes and select a limited number for display
             displayedRecipes = recipes.OrderBy(r => random.Next()).Take(DisplayCount).ToList();
         }
     }
 
+    // Method to navigate to a specific recipe detail page
     private void NavigateToRecipe(int recipeId)
     {
+        // Redirect to the recipe detail page using the recipe ID
         Navigation.NavigateTo($"/recipe/{recipeId}");
     }
 
+    // Method to navigate to the full list of recipes
     private void ShowMore()
     {
+        // Redirect to the page displaying all recipes
         Navigation.NavigateTo("/recipes");
     }
 }
+

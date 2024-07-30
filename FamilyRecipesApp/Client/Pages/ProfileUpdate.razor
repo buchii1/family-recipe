@@ -10,37 +10,37 @@
 <EditForm Model="@userProfile" OnValidSubmit="HandleValidSubmit">
     <DataAnnotationsValidator />
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label for="firstName">First Name:</label>
         <InputText id="firstName" class="form-control" @bind-Value="userProfile.FirstName" />
         <ValidationMessage For="@(() => userProfile.FirstName)" />
     </div>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label for="lastName">Last Name:</label>
         <InputText id="lastName" class="form-control" @bind-Value="userProfile.LastName" />
         <ValidationMessage For="@(() => userProfile.LastName)" />
     </div>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label for="email">Email Address:</label>
         <InputText id="email" class="form-control" @bind-Value="userProfile.Email" />
         <ValidationMessage For="@(() => userProfile.Email)" />
     </div>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label for="bio">Bio:</label>
         <InputTextArea id="bio" class="form-control" @bind-Value="userProfile.Bio" />
         <ValidationMessage For="@(() => userProfile.Bio)" />
     </div>
 
-    <div class="form-group">
+    <div class="form-group mb-3">
         <label for="profileImg">Profile Image:</label>
         <InputFile id="profileImg" class="form-control-file" OnChange="HandleFileSelected" />
         <ValidationMessage For="@(() => userProfile.ProfileImg)" />
     </div>
 
-    <button type="submit" class="btn btn-primary">Update</button>
+    <button type="submit" class="btn btn-primary mb-3">Update</button>
 
     <label class="text-danger">@error</label>
 </EditForm>
@@ -51,55 +51,81 @@
 }
 
 @code {
+    // UserProfile instance to hold the user's profile data
     private UserProfile userProfile = new UserProfile();
+    
+    // Flag to indicate whether the user profile data is still loading
     private bool isLoading = true;
+    
+    // Variable to store any error messages
     string error { get; set; }
 
+    // Authentication state for determining if the user is authenticated
     private AuthenticationState authenticationState;
 
+    // Method called when the component is initialized
     protected override async Task OnInitializedAsync()
     {
+        // Retrieve the current authentication state
         authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authenticationState.User;
 
+        // Check if the user is authenticated
         if (user.Identity.IsAuthenticated)
         {
+            // Get the username from the authentication state
             var username = user.Identity.Name;
+
+            // Fetch the user's profile data using the username
             userProfile = await Http.GetFromJsonAsync<UserProfile>($"api/user/{username}");
+
+            // Set loading flag to false as data has been loaded
             isLoading = false;
         }
         else
         {
+            // Redirect to the sign-in page if the user is not authenticated
             Navigation.NavigateTo("/signin");
         }
     }
 
+    // Method to handle form submission and update the user profile
     private async Task HandleValidSubmit()
     {
+        // Reset the error message before attempting to update
         error = null;
+        
         try
         {
+            // If an image is selected, convert it to a base64 string for profile picture
             if (selectedImage != null)
             {
                 userProfile.ProfileImg = await ConvertFileToBase64(selectedImage);
             }
+
+            // Send an HTTP PUT request to update the user profile
             var response = await Http.PutAsJsonAsync("api/user", userProfile);
+
             if (response.IsSuccessStatusCode)
             {
+                // Redirect to the profile page on successful update
                 Navigation.NavigateTo("/profile");
             }
             else
             {
+                // Set error message if the update fails
                 error = "Error updating profile.";
             }
         }
         catch (Exception ex)
         {
+            // Capture and display any exceptions that occur during the update
             error = ex.Message;
-            Console.WriteLine($"Exception: {ex.Message}"); // Debugging log
+            @* Console.WriteLine($"Exception: {ex.Message}"); // Debugging log *@
         }
     }
 
+    // Method to convert the selected file to a base64 string
     private async Task<string> ConvertFileToBase64(IBrowserFile file)
     {
         var buffer = new byte[file.Size];
@@ -107,11 +133,14 @@
         return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
     }
 
+    // Variable to hold the selected image file
     private IBrowserFile selectedImage;
 
+    // Method to handle file selection and store the selected image
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
         selectedImage = e.File;
-        Console.WriteLine($"Selected file: {selectedImage.Name}"); // Debugging log
+        @* Console.WriteLine($"Selected file: {selectedImage.Name}"); // Debugging log *@
     }
 }
+

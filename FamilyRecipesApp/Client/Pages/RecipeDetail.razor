@@ -69,36 +69,57 @@ else
 }
 
 @code {
+    // Recipe ID parameter to fetch specific recipe details
     [Parameter] public int recipeId { get; set; }
+    
+    // Variable to hold the recipe details
     private Recipe recipe;
+    
+    // Variable to hold the profile of the recipe author
     private UserProfile author;
+    
+    // List to store the ingredients of the recipe
     private List<string> ingredients;
+    
+    // List to store the preparation steps of the recipe
     private List<string> preparationSteps;
+    
+    // Flag to indicate whether the recipe details are still loading
     private bool isLoading = true;
 
+    // Method called when the component is initialized
     protected override async Task OnInitializedAsync()
     {
+        // Load recipe details and update loading status
         await LoadRecipeDetails();
         isLoading = false;
     }
 
+    // Method to load recipe details from the server
     private async Task LoadRecipeDetails()
     {
         try
         {
+            // Fetch the recipe details using the provided recipe ID
             recipe = await Http.GetFromJsonAsync<Recipe>($"api/recipe/{recipeId}");
 
             if (recipe != null)
             {
+                // Fetch the profile of the recipe author using the username from the recipe
                 author = await Http.GetFromJsonAsync<UserProfile>($"api/user/{recipe.UserName}");
 
+                // Split and store the ingredients from the recipe into a list
                 ingredients = recipe.Ingredients.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                
+                // Split and store the preparation steps from the recipe into a list
                 preparationSteps = recipe.PreparationSteps.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading recipe details: {ex.Message}");
+            // Log any errors that occur while loading recipe details
+            @* Console.WriteLine($"Error loading recipe details: {ex.Message}"); *@
         }
     }
 }
+

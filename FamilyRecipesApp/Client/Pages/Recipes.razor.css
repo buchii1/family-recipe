@@ -1,0 +1,83 @@
+@media (max-width: 800px) {
+ 
+.recipe-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.recipe-box {
+    border: 1px solid #ddd;
+    padding: 10px;
+    width: 200px;
+    text-align: center;
+}
+
+.recipe-img {
+    max-width: 180px;
+    height: auto;
+}
+
+.pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.pagination button {
+    margin: 0 5px;
+    padding: 5px 10px;
+}
+
+.pagination .active {
+    font-weight: bold;
+}
+
+.search-btn {
+    background: #ff7315;
+    background-image: -webkit-linear-gradient(top, #ff7315, #ff7315);
+    background-image: -moz-linear-gradient(top, #ff7315, #ff7315);
+    background-image: -ms-linear-gradient(top, #ff7315, #ff7315);
+    background-image: -o-linear-gradient(top, #ff7315, #ff7315);
+    background-image: linear-gradient(to bottom, #ff7315, #ff7315);
+    -webkit-border-radius: 8;
+    -moz-border-radius: 8;
+    border-radius: 8px;
+    font-family: Arial;
+    color: #ffffff;
+    font-size: 20px;
+    padding: 5px 10px 5px 10px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    text-decoration: none;
+    }
+
+    .btn:hover {
+    background: #000000;
+    background-image: -webkit-linear-gradient(top, #000000, #ff7315);
+    background-image: -moz-linear-gradient(top, #000000, #ff7315);
+    background-image: -ms-linear-gradient(top, #000000, #ff7315);
+    background-image: -o-linear-gradient(top, #000000, #ff7315);
+    background-image: linear-gradient(to bottom, #000000, #ff7315);
+    text-decoration: none;
+    }
+
+    input {
+    width: 100%; /* Full width on mobile */
+    padding: 10px; /* Adequate padding */
+    border-radius: 5px; /* Rounded corners */
+    border: 1px solid #ccc; /* Light border */
+    font-size: 16px; /* Larger font size for readability */
+    box-sizing: border-box; /* Ensure padding and border are included in width */
+}   
+
+
+#filler-div {
+    height: 120px;
+    visibility: hidden;
+}
+
+.recipe-h4 {
+    margin-top: 10px;
+}
+
+}

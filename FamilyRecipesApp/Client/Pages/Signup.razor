@@ -43,19 +43,29 @@
     </div>
 
 @code{
+    // Instance of RegisterRequest to hold the registration data
     RegisterRequest registerRequest { get; set; } = new RegisterRequest();
+    
+    // Variable to store any error messages that occur during registration
     string error { get; set; }
 
+    // Method to handle the form submission
     async Task OnSubmit()
     {
+        // Reset the error message before attempting registration
         error = null;
+        
         try
         {
+            // Call the Register method of the authStateProvider to register the user
             await authStateProvider.Register(registerRequest);
+            
+            // Redirect the user to the profile update page upon successful registration
             Navigation.NavigateTo("/profile-update");
         }
         catch (Exception ex)
         {
+            // Capture and display any error message that occurs during registration
             error = ex.Message;
         }
     }

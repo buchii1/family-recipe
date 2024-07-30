@@ -6,23 +6,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FamilyRecipesApp.Server.Controllers
 {
+    // Define the base route for the controller and mark it as an API controller
     [ApiController]
     [Route("api/[controller]")]
     public class RecipeController : ControllerBase
     {
         private readonly ApplicationDBContext _context;
 
+        // Constructor to initialize the database context
         public RecipeController(ApplicationDBContext context)
         {
             _context = context;
         }
 
+        // Endpoint to get all recipes, ordered by creation date in descending order
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Recipe>>> GetRecipes()
         {
             return await _context.Recipes.OrderByDescending(r => r.CreatedAt).ToListAsync();
         }
 
+        // Endpoint to get recipes by a specific user, ordered by creation date in descending order
         [HttpGet("user/{username}")]
         public async Task<ActionResult<List<Recipe>>> GetRecipesByUser(string username)
         {
@@ -34,7 +38,7 @@ namespace FamilyRecipesApp.Server.Controllers
             return Ok(recipes);
         }
 
-
+        // Endpoint to add a new recipe, requires authorization
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> AddRecipe([FromBody] Recipe recipe)
@@ -46,10 +50,10 @@ namespace FamilyRecipesApp.Server.Controllers
 
             try
             {
-                // Add recipe to context
+                // Add the recipe to the database context
                 _context.Recipes.Add(recipe);
 
-                // Save changes to db
+                // Save changes to the database
                 await _context.SaveChangesAsync();
 
                 return Ok(recipe);
@@ -60,9 +64,8 @@ namespace FamilyRecipesApp.Server.Controllers
             }
         }
 
-        // GET api/recipe/{recipeId}
+        // Endpoint to get a recipe by its ID
         [HttpGet("{recipeId:int}")]
-        // [Authorize]
         public async Task<IActionResult> GetRecipeById(int recipeId)
         {
             try
@@ -82,7 +85,7 @@ namespace FamilyRecipesApp.Server.Controllers
             }
         }
 
-        // PUT api/recipe/{recipeId}
+        // Endpoint to update an existing recipe, requires authorization
         [HttpPut("{recipeId:int}")]
         [Authorize]
         public async Task<IActionResult> UpdateRecipe(int recipeId, [FromBody] Recipe updatedRecipe)
@@ -96,6 +99,7 @@ namespace FamilyRecipesApp.Server.Controllers
 
             try
             {
+                // Save changes to the database
                 await _context.SaveChangesAsync();
                 return Ok(updatedRecipe);
             }
@@ -105,6 +109,7 @@ namespace FamilyRecipesApp.Server.Controllers
             }
         }
 
+        // Endpoint to delete a recipe by its ID, requires authorization
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<IActionResult> DeleteRecipe(int id)
@@ -117,6 +122,7 @@ namespace FamilyRecipesApp.Server.Controllers
                     return NotFound();
                 }
 
+                // Remove the recipe from the database
                 _context.Recipes.Remove(recipe);
                 await _context.SaveChangesAsync();
 

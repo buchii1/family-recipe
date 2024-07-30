@@ -1,0 +1,49 @@
+name: Azure Static Web Apps CI/CD
+
+trigger:
+  branches:
+    include:
+      - main
+
+jobs:
+- job: build_and_deploy_job
+  displayName: Build and Deploy Job
+  condition: or(eq(variables['Build.Reason'], 'Manual'), or(eq(variables['Build.Reason'], 'PullRequest'), eq(variables['Build.Reason'], 'IndividualCI')))
+  pool:
+    vmImage: ubuntu-latest
+
+  variables:
+    - group: Azure-Static-Web-Apps-happy-bush-08d10cd1e-variable-group
+
+  steps:
+  - checkout: self
+    submodules: true
+
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '6.x' # Ensure this matches your project's .NET version
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'restore'
+      projects: 'FamilyRecipesApp/Server/**/*.csproj'
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'build'
+      projects: 'FamilyRecipesApp/Server/**/*.csproj'
+      arguments: '--configuration Release'
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'publish'
+      projects: 'FamilyRecipesApp/Server/**/*.csproj'
+      arguments: '--configuration Release --output $(Build.ArtifactStagingDirectory)'
+
+  - task: AzureStaticWebApp@0
+    inputs:
+      azure_static_web_apps_api_token: $(AZURE_STATIC_WEB_APPS_API_TOKEN_HAPPY_BUSH_08D10CD1E)
+      app_location: "FamilyRecipesApp/Client" # Adjust this to the actual location of your Blazor client app
+      api_location: "FamilyRecipesApp/Server" # API source code path - pointing to the server directory
+      output_location: "wwwroot" # Ensure this matches where the build output is located

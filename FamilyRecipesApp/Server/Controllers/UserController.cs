@@ -13,20 +13,25 @@ namespace FamilyRecipesApp.Server.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
 
+        // Constructor to initialize UserManager
         public UserController(UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
         }
 
+        // Endpoint to get user profile by username
         [HttpGet("{username}")]
+        [AllowAnonymous]
         public async Task<ActionResult<UserProfile>> GetUserProfile(string username)
         {
+            // Find user by username
             var user = await _userManager.FindByNameAsync(username);
             if (user == null)
             {
                 return NotFound();
             }
 
+            // Map ApplicationUser to UserProfile
             var userProfile = new UserProfile
             {
                 UserName = user.UserName,
@@ -40,6 +45,7 @@ namespace FamilyRecipesApp.Server.Controllers
             return Ok(userProfile);
         }
 
+        // Endpoint to update user profile
         [HttpPut]
         public async Task<IActionResult> UpdateUserProfile([FromBody] UserProfile userProfile)
         {
@@ -64,6 +70,7 @@ namespace FamilyRecipesApp.Server.Controllers
             user.Bio = userProfile.Bio;
             user.ProfileImg = userProfile.ProfileImg;
 
+            // Save changes to the database
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {

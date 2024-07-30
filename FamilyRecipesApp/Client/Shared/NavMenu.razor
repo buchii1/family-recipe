@@ -7,93 +7,82 @@
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Family Recipes</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
     </div>
 </div>
 
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <div class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+<div class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" @onclick="ToggleNavMenu" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="@collapseNavMenu" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse @NavMenuCssClass" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                        <span class="oi oi-home" aria-hidden="true"></span> Home
+                    </NavLink>
+                </li>
+                <li class="nav-item mt-3">
+                    <NavLink class="nav-link" href="/recipes">
+                        <span class="oi" aria-hidden="true"></span> Recipes
+                    </NavLink>
+                </li>
+                @if (UserIsAuthenticated)
+                {
+                    <li class="nav-item mt-3">
+                        <NavLink class="nav-link" href="/add-recipe">
+                            <span class="oi" aria-hidden="true"></span> Add Recipe
+                        </NavLink>
+                    </li>
+                }
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                @if (UserIsAuthenticated)
+                {
+                    <li class="nav-item" style="margin-top: -4px;">
+                        <NavLink class="nav-link" href="/profile">
+                            <span class="oi" aria-hidden="true"></span> Welcome, @UserName!
+                        </NavLink>
+                    </li>
+                    <li class="nav-item mt-3">
+                        <button type="button" class="btn btn-link" @onclick="LogoutClick">Logout</button>
+                    </li>
+                }
+                else
+                {
                     <li class="nav-item">
-                        <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
-                            <span class="oi oi-home" aria-hidden="true"></span> Home
+                        <NavLink class="nav-link" href="/signup">
+                            <span class="oi" aria-hidden="true"></span> Join
                         </NavLink>
                     </li>
                     <li class="nav-item mt-3">
-                        <NavLink class="nav-link" href="/recipes">
-                            <span class="oi" aria-hidden="true"></span> Recipes
+                        <NavLink class="nav-link" href="/signin">
+                            <span class="oi" aria-hidden="true"></span> Login
                         </NavLink>
                     </li>
-                    @if (UserIsAuthenticated)
-                    {
-                        <li class="nav-item mt-3">
-                            <NavLink class="nav-link" href="/add-recipe">
-                                <span class="oi" aria-hidden="true"></span> Add Recipe
-                            </NavLink>
-                        </li>
-                    }
-                    @* <li class="nav-item mt-3">
-                    <NavLink class="nav-link" href="/fetchdata">
-                    <span class="oi" aria-hidden="true"></span> Community
-                    </NavLink>
-                    </li>
-                    <li class="nav-item mt-3">
-                    <NavLink class="nav-link" href="#">
-                    <span class="oi" aria-hidden="true"></span> Explore
-                    </NavLink>
-                    </li> *@
-                </ul>
-                <ul class="navbar-nav ml-auto">
-                    @if (UserIsAuthenticated)
-                    {
-                        <li class="nav-item" style="margin-top: -4px;">
-                            <NavLink class="nav-link" href="/profile">
-                                <span class="oi" aria-hidden="true"></span> Welcome, @UserName!
-                            </NavLink>
-                        </li>
-                        <li class="nav-item  mt-3">
-                            <button type="button" class="btn btn-link" @onclick="LogoutClick">Logout</button>
-                        </li>
-                    }
-                    else
-                    {
-                        <li class="nav-item">
-                            <NavLink class="nav-link" href="/signup">
-                                <span class="oi" aria-hidden="true"></span> Join
-                            </NavLink>
-                        </li>
-                        <li class="nav-item mt-3">
-                            <NavLink class="nav-link" href="/signin">
-                                <span class="oi" aria-hidden="true"></span> Login
-                            </NavLink>
-                        </li>
-                    }
-                </ul>
-            </div>
+                }
+            </ul>
         </div>
     </div>
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
-    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private bool collapseNavMenu = true; // Start collapsed
 
-    private bool UserIsAuthenticated { get; set; }
-    private string UserName { get; set; }
+    // CSS class for navigation menu based on whether it is collapsed or not
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : "collapse show";
 
+    private bool UserIsAuthenticated { get; set; } // Indicates if the user is authenticated
+    private string UserName { get; set; } // Stores the user's name
+
+    // Toggles the navigation menu between collapsed and expanded states
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
 
+    // Initializes the component and retrieves authentication state
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
@@ -103,9 +92,11 @@
         UserName = user.FindFirst(ClaimTypes.Name)?.Value;
         UserName = CapitalizeFirstLetter(UserName);
 
+        // Subscribe to authentication state changes
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
     }
 
+    // Handles changes in authentication state
     private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
     {
         InvokeAsync(async () =>
@@ -117,30 +108,34 @@
             UserName = user.FindFirst(ClaimTypes.Name)?.Value;
             UserName = CapitalizeFirstLetter(UserName);
 
+            // Request UI update
             StateHasChanged();
         });
     }
 
+    // Capitalizes the first letter of the input string
     private string CapitalizeFirstLetter(string input)
-{
-    if (string.IsNullOrWhiteSpace(input))
     {
-        return input;
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return input;
+        }
+
+        return char.ToUpper(input[0]) + input.Substring(1).ToLower();
     }
 
-    return char.ToUpper(input[0]) + input.Substring(1).ToLower();
-}
-
-
+    // Handles user logout and navigates to the home page
     private async Task LogoutClick()
     {
         await AuthStateProvider.Logout();
         Navigation.NavigateTo("/");
-        StateHasChanged();
+        StateHasChanged(); // Request UI update
     }
 
+    // Unsubscribe from authentication state changes when the component is disposed
     public void Dispose()
     {
         AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }
+
